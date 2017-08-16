@@ -39,6 +39,8 @@ class VcaCliUtils(object):
         self._print(message, cmd_proc, fg='yellow')
 
     def print_message(self, message, cmd_proc=None):
+        # Hack: Disable stdout, since we're calling with Json flag
+        #       Need to tidy this up to check for the flags presense
         self._print(message, cmd_proc, fg='blue')
 
     def print_error(self, message, cmd_proc=None, module=None):
@@ -125,12 +127,13 @@ class VcaCliUtils(object):
         status = task.get_status()
         rnd = 0
         response = None
-        rows, columns = os.popen('stty size', 'r').read().split()
+        # rows, columns = os.popen('stty size', 'r').read().split()
+        columns = 80
         while status != "success":
             if status == "error":
                 error = task.get_Error()
-                sys.stdout.write('\r' + ' ' * int(columns) + '\r')
-                sys.stdout.flush()
+                #sys.stdout.write('\r' + ' ' * int(columns) + '\r')
+                #sys.stdout.flush()
                 self.print_error(task.get_operation(),
                                  cmd_proc=cmd_proc)
                 self.print_error(CommonUtils.convertPythonObjToStr(
@@ -138,30 +141,32 @@ class VcaCliUtils(object):
                                  cmd_proc=cmd_proc)
                 return None
             else:
+                # Hack: Disable stdout, since we're calling with Json flag
+                #       Need to tidy this up to check for the flags presense
                 # some task doesn't not report progress
-                if progress:
-                    sys.stdout.write("\rprogress: [" + "*" *
-                                     int(progress) + " " *
-                                     (40 - int(progress - 1)) + "] " +
-                                     str(progress) + " %")
-                else:
-                    sys.stdout.write("\rprogress: ")
-                    if rnd % 4 == 0:
-                        sys.stdout.write(
-                            "[" + "*" * 10 + " " * 30 + "]")
-                    elif rnd % 4 == 1:
-                        sys.stdout.write(
-                            "[" + " " * 10 + "*" * 10 + " " * 20 + "]")
-                    elif rnd % 4 == 2:
-                        sys.stdout.write(
-                            "[" + " " * 20 + "*" * 10 + " " * 10 + "]")
-                    elif rnd % 4 == 3:
-                        sys.stdout.write(
-                            "[" + " " * 30 + "*" * 10 + "]")
-                    rnd += 1
+                #if progress:
+                #    sys.stdout.write("\rprogress: [" + "*" *
+                #                     int(progress) + " " *
+                #                     (40 - int(progress - 1)) + "] " +
+                #                     str(progress) + " %")
+                #else:
+                #    sys.stdout.write("\rprogress: ")
+                #    if rnd % 4 == 0:
+                #        sys.stdout.write(
+                #            "[" + "*" * 10 + " " * 30 + "]")
+                #    elif rnd % 4 == 1:
+                #        sys.stdout.write(
+                #            "[" + " " * 10 + "*" * 10 + " " * 20 + "]")
+                #    elif rnd % 4 == 2:
+                #        sys.stdout.write(
+                #            "[" + " " * 20 + "*" * 10 + " " * 10 + "]")
+                #    elif rnd % 4 == 3:
+                #        sys.stdout.write(
+                #            "[" + " " * 30 + "*" * 10 + "]")
+                #    rnd += 1
                 msg = ' %s' % task.get_operation()
-                sys.stdout.write(msg + ' ' * (int(columns)-52-len(msg)) + '\r')
-                sys.stdout.flush()
+                #sys.stdout.write(msg + ' ' * (int(columns)-52-len(msg)) + '\r')
+                #sys.stdout.flush()
                 time.sleep(1)
                 response = Http.get(task.get_href(), headers=headers,
                                     verify=cmd_proc.verify,
@@ -173,13 +178,15 @@ class VcaCliUtils(object):
                 else:
                     Log.error(cmd_proc.logger, "can't get task")
                     return
-            rows, columns = os.popen('stty size', 'r').read().split()
-        sys.stdout.write("\r" + " " * int(columns) + '\r')
-        sys.stdout.flush()
+            #rows, columns = os.popen('stty size', 'r').read().split()
+            columns = 80
+        # Hack: Disable stdout, since we're calling with Json flag
+        #       Need to tidy this up to check for the flags presense
+        #sys.stdout.write("\r" + " " * int(columns) + '\r')
+        #sys.stdout.flush()
         if response is not None:
             if cmd_proc is not None and cmd_proc.json_output:
-                sys.stdout.write("\r" +
-                                 self.task_to_json(response.content) + '\n')
+                sys.stdout.write(self.task_to_json(response.content) + '\n')
             else:
                 sys.stdout.write("\r" +
                                  self.task_to_table(response.content) + '\n')
